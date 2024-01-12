@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import styles from './App.module.sass'
 
 function App () {
@@ -10,11 +10,8 @@ function App () {
   const [deka, setDeka] = useState([])
   const [myDeka, setMyDeka] = useState([])
   const [opponentDeka, setOpponentDeka] = useState([])
+  const [win, setWin] = useState(null)
   const amounts = [1, 5, 25, 50, 100, 200]
-
-  useEffect(() => {
-    console.log('deka,myDeka,opponentDeka :>> ', deka, myDeka, opponentDeka)
-  }, [deka, myDeka, opponentDeka])
 
   const changeAmount = newAmount => {
     if (!isGame && limit >= newAmount + amount) {
@@ -37,17 +34,14 @@ function App () {
     const newMyDeka = [...myDeka]
     const index1 = Math.random() * Deka.length
     const number1 = Deka.splice(index1, 1)[0]
-    console.log('number1 :>> ', number1)
     const index2 = Math.random() * Deka.length
     const number2 = Deka.splice(index2, 1)[0]
-    console.log('number2 :>> ', number2)
 
     if (number1 + number2 > 21) {
       return firstMyDekaRandomCart(newDeka)
     }
     newMyDeka.push(number1)
     newMyDeka.push(number2)
-    console.log('Deka :>> ', Deka)
     setDeka(Deka)
     setMyDeka(newMyDeka)
     return Deka
@@ -58,15 +52,12 @@ function App () {
     const newOpponentDeka = [...opponentDeka]
     const index1 = Math.random() * Deka.length
     const number1 = Deka.splice(index1, 1)[0]
-    console.log('number1 :>> ', number1)
     const index2 = Math.random() * Deka.length
     const number2 = Deka.splice(index2, 1)[0]
-    console.log('number2 :>> ', number2)
 
     if (number1 + number2 > 21) {
       return firstOpponentDekaRandomCart(newDeka)
     }
-    console.log('Deka :>> ', Deka)
     newOpponentDeka.push(number1)
     newOpponentDeka.push(number2)
 
@@ -77,41 +68,82 @@ function App () {
   const startGame = () => {
     setIsGame(true)
     const newDeka = [...deka]
-    for (let index = 1; index <= 21; index++) {
+    for (let index = 1; index <= 13; index++) {
       newDeka.push(index)
     }
-    console.log('newDeka :>> ', newDeka)
     firstOpponentDekaRandomCart(firstMyDekaRandomCart(newDeka))
-    console.log('myDeka: ', myDeka)
-    console.log('opponentDeka: ', opponentDeka)
   }
 
   const randomMyDekaCart = deka => {
-    console.log('deka :>> ', deka)
     const newDeka = [...deka]
-    console.log('myDeka :>> ', myDeka)
     const newMyDeka = [...myDeka]
     const index = Math.random() * deka.length
     const number = newDeka.splice(index, 1)[0]
-    console.log('number :>> ', number)
     newMyDeka.push(number)
 
     setDeka(newDeka)
     setMyDeka(newMyDeka)
-    console.log('newDeka :>> ', newDeka)
-    console.log('newMyDeka :>> ', newMyDeka)
+    let sum = newMyDeka.reduce((a, b) => a + b, 0)
+    if (sum > 21) {
+      setIsFinish(true)
+      setWin(false)
+    } else if (sum === 21) {
+      setIsFinish(true)
+      setWin(true)
+    }
   }
 
-  // const randomOpponentDekaCart = deka => {
-  //   const newDeka = [...deka]
-  //   const newOpponentDeka = [...opponentDeka]
-  //   const number = Math.random() * deka.length
-  //   newOpponentDeka.push(newDeka.splice(number, 1)[0])
+  const randomOpponentDekaCart = (deka, opponentDeka) => {
+    const newDeka = [...deka]
+    const newOpponentDeka = [...opponentDeka]
+    const number = Math.random() * newDeka.length
+    newOpponentDeka.push(newDeka.splice(number, 1)[0])
 
-  //   setDeka(newDeka)
-  //   setMyDeka(newOpponentDeka)
-  //   console.log('newOpponentDeka :>> ', newOpponentDeka)
-  // }
+    setDeka(newDeka)
+    setOpponentDeka(newOpponentDeka)
+    let opponentSum = newOpponentDeka.reduce((a, b) => a + b, 0)
+    let sum = myDeka.reduce((a, b) => a + b, 0)
+    if (opponentSum > 21) {
+      setWin(true)
+    } else if (opponentSum === sum) {
+      setWin(null)
+    } else if (opponentSum === 21 || opponentSum > sum) {
+      setWin(false)
+    } else if (opponentSum < sum) {
+      randomOpponentDekaCart(newDeka, newOpponentDeka)
+    }
+  }
+
+  const againBtn = () => {
+    switch (win) {
+      case true:
+        setMoney(money + amount)
+        break
+      case false:
+        setMoney(money - amount)
+        break
+      default:
+        break
+    }
+    setAmount(0)
+    setIsGame(false)
+    setIsFinish(false)
+    setDeka([])
+    setMyDeka([])
+    setOpponentDeka([])
+    setWin(false)
+  }
+
+  const finish = () => {
+    setIsFinish(true)
+    let opponentSum = opponentDeka.reduce((a, b) => a + b, 0)
+    let sum = myDeka.reduce((a, b) => a + b, 0)
+    if (opponentSum > sum) {
+      setWin(false)
+    } else {
+      randomOpponentDekaCart(deka, opponentDeka)
+    }
+  }
 
   return (
     <div className={styles.body}>
@@ -146,21 +178,37 @@ function App () {
 
         {isGame && (
           <>
-            <div
-              onClick={() => {
-                console.log('myDeka :>> ', myDeka)
-                randomMyDekaCart(deka)
-              }}
-              className={`${styles.text} ${styles.getCart}`}
-            >
-              ТАЩИТЬ КАРТУ
-            </div>
-            <div
-              onClick={() => setIsFinish(true)}
-              className={`${styles.text} ${styles.endGame}`}
-            >
-              СТЭНД
-            </div>
+            {!isFinish ? (
+              <>
+                <div
+                  onClick={() => {
+                    console.log('myDeka :>> ', myDeka)
+                    randomMyDekaCart(deka)
+                  }}
+                  className={`${styles.text} ${styles.getCart}`}
+                >
+                  ТАЩИТЬ КАРТУ
+                </div>
+                <div
+                  onClick={() => finish()}
+                  className={`${styles.text} ${styles.endGame}`}
+                >
+                  СТЭНД
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={`${styles.text} ${styles.win}`}>
+                  {win ? 'Победа' : win === false ? 'Поражение' : 'Ничья'}
+                </div>
+                <div
+                  onClick={() => againBtn()}
+                  className={`${styles.text} ${styles.againBtn}`}
+                >
+                  Заново
+                </div>
+              </>
+            )}
             <div className={`${styles.text} ${styles.carts}`}>
               {myDeka.map((cart, index) => (
                 <div
