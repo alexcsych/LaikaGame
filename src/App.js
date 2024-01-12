@@ -182,7 +182,6 @@ function App () {
               <>
                 <div
                   onClick={() => {
-                    console.log('myDeka :>> ', myDeka)
                     randomMyDekaCart(deka)
                   }}
                   className={`${styles.text} ${styles.getCart}`}
